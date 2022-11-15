@@ -6,13 +6,21 @@ const helper = require("../../utils/shared");
 const knex = require("../../config/db");
 const passport = require("../../utils/auth/local");
 
-router.post("/register",helper.upload.single('picture'), async (req, res) => {
-  console.log(req.body, "body");
-  const {email, zipcode} = req.body
-  if(!email || !zipcode) {
+router.get(
+  "/user/:id",
+  async (req, res) => {
+    const user = await knex("users").where({ id: req?.params?.id }).first();
+    const {password, ...rest} = user
+    return res.status(200).send(rest);
+  }
+);
+
+router.post("/register", helper.upload.single("picture"), async (req, res) => {
+  const { email, zipcode } = req.body;
+  if (!email || !zipcode) {
     return helper.handleResponse(res, 400, "bad request");
   }
-  const user = await knex("users").where({ email: req.body.email }).first();
+  const user = await knex("users").where({ email: req?.body?.email }).first();
   if (user) {
     return helper.handleResponse(res, 401, "user already exist");
   } else {
@@ -32,13 +40,13 @@ router.post("/register",helper.upload.single('picture'), async (req, res) => {
         });
       })
       .catch((err) => {
+        console.log(err);
         helper.handleResponse(res, 500, "error");
       });
   }
 });
 
 router.post("/login", passport.authenticate("local"), (req, res) => {
-  console.log("after authenticate");
   if (!req.user) {
     helper.handleResponse(res, 401, req.messages);
   }
@@ -57,5 +65,32 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
     user: payload,
   });
 });
+
+router.put(
+  "/user/:id",
+  async (req, res) => {
+    const user = await knex("users").where({ id: req?.params?.id }).first();
+    if(user) {
+      return authHelper
+      .updateUser(req, res)
+      .then((response) => {
+        const user = response[0];
+        const payload = {
+          name: user.name,
+          id: user.id,
+          email: user.email,
+        };
+        helper.handleResponseWithData(res, 200, {
+          user: payload
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        helper.handleResponse(res, 500, "error");
+      });
+    }
+    return  res.status(200).send("succes")
+  }
+);
 
 module.exports = router;

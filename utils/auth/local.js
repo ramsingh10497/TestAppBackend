@@ -29,7 +29,7 @@ passport.use(
 
 passport.use(
   new JwtStrategy(opts, async function (jwt_payload, done) {
-    done(null, true);
+    done(null, jwt_payload);
   })
 );
 module.exports = passport;

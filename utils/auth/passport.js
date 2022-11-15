@@ -5,7 +5,7 @@ module.exports = () => {
   passport.serializeUser((user, done) => {
     console.log("comes in serializer")
     if (user) {
-      return done(null, user.id);
+      return done(null, user);
     }
     return done(null, false);
   });
