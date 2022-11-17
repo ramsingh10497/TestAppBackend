@@ -4,6 +4,7 @@ const cors = require("cors");
 
 const app = express();
 const port = 7000;
+const oneDay = 1000 * 60 * 60 * 24;
 
 const routeConfig = require("./routes/index");
 const passport = require("./utils/auth/local");
@@ -16,7 +17,7 @@ app.use(
     secret: "keyboard cat",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false, maxAge: 60000 },
+    cookie: { secure: false, maxAge: oneDay },
   })
 );
 

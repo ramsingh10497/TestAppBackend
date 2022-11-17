@@ -6,14 +6,16 @@ const helper = require("../../utils/shared");
 const knex = require("../../config/db");
 const passport = require("../../utils/auth/local");
 
-router.get(
-  "/user/:id",
-  async (req, res) => {
-    const user = await knex("users").where({ id: req?.params?.id }).first();
-    const {password, ...rest} = user
-    return res.status(200).send(rest);
-  }
-);
+router.get("/user/:id", async (req, res) => {
+  const user = await knex("users").where({ id: req?.params?.id }).first();
+  const { password, ...rest } = user;
+  return res.status(200).send(rest);
+});
+
+router.get("/loggedUsers", (req, res) => {
+  let sessions = req.sessionStore.sessions;
+  res.status(200).send(sessions);
+});
 
 router.post("/register", helper.upload.single("picture"), async (req, res) => {
   const { email, zipcode } = req.body;
@@ -66,12 +68,10 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
   });
 });
 
-router.put(
-  "/user/:id",
-  async (req, res) => {
-    const user = await knex("users").where({ id: req?.params?.id }).first();
-    if(user) {
-      return authHelper
+router.put("/user/:id", async (req, res) => {
+  const user = await knex("users").where({ id: req?.params?.id }).first();
+  if (user) {
+    return authHelper
       .updateUser(req, res)
       .then((response) => {
         const user = response[0];
@@ -81,16 +81,20 @@ router.put(
           email: user.email,
         };
         helper.handleResponseWithData(res, 200, {
-          user: payload
+          user: payload,
         });
       })
       .catch((err) => {
         console.log(err);
         helper.handleResponse(res, 500, "error");
       });
-    }
-    return  res.status(200).send("succes")
   }
-);
+  return res.status(200).send("success");
+});
+
+router.get("/logout", (req, res) => {
+  req.session.destroy();
+  res.status(200).send("Logout Successfully");
+});
 
 module.exports = router;
