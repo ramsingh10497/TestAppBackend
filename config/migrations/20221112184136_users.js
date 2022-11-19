@@ -7,7 +7,6 @@ exports.up = function (knex) {
     table.biginteger("phone");
     table.biginteger("mobile");
     table.integer("zipcode").notNullable();
-    table.binary("picture");
     table.decimal("lat");
     table.decimal("long");
   });

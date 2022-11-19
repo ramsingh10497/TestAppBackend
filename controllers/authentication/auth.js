@@ -1,27 +1,38 @@
-const express = require("express");
-const router = express.Router();
-
 const authHelper = require("../../utils/auth/auth");
 const helper = require("../../utils/shared");
 const knex = require("../../config/db");
-const passport = require("../../utils/auth/local");
+const { positionPath } = require("../../utils/externalAPIpath");
+const fetch = require("node-fetch")
+require('dotenv').config()
 
-router.get("/user/:id", async (req, res) => {
+const getUser = async (req, res) => {
   const user = await knex("users").where({ id: req?.params?.id }).first();
   const { password, ...rest } = user;
   return res.status(200).send(rest);
-});
+};
 
-router.get("/loggedUsers", (req, res) => {
+const loggedUsers = (req, res) => {
   let sessions = req.sessionStore.sessions;
   res.status(200).send(sessions);
-});
+};
 
-router.post("/register", helper.upload.single("picture"), async (req, res) => {
+const userRegister = async (req, res) => {
   const { email, zipcode } = req.body;
   if (!email || !zipcode) {
     return helper.handleResponse(res, 400, "bad request");
   }
+
+  let headersList = {
+    "Accept": "*/*"
+   }
+   let response = await fetch(`${positionPath}?access_key=${process.env.POSTIONSTACK_ACCESS_KEY}&query=${zipcode}&limit=1`, { 
+     method: "GET",
+     headers: headersList
+   });
+   let data = await response.json();
+   req.body.lat = data.data[0].latitude ?? 0
+   req.body.long = data.data[0].longitude ?? 0
+
   const user = await knex("users").where({ email: req?.body?.email }).first();
   if (user) {
     return helper.handleResponse(res, 401, "user already exist");
@@ -46,9 +57,9 @@ router.post("/register", helper.upload.single("picture"), async (req, res) => {
         helper.handleResponse(res, 500, "error");
       });
   }
-});
+};
 
-router.post("/login", passport.authenticate("local"), (req, res) => {
+const userLogin = (req, res) => {
   if (!req.user) {
     helper.handleResponse(res, 401, req.messages);
   }
@@ -66,9 +77,9 @@ router.post("/login", passport.authenticate("local"), (req, res) => {
     token: "Bearer " + token,
     user: payload,
   });
-});
+};
 
-router.put("/user/:id", async (req, res) => {
+const updateUserProfile = async (req, res) => {
   const user = await knex("users").where({ id: req?.params?.id }).first();
   if (user) {
     return authHelper
@@ -90,11 +101,18 @@ router.put("/user/:id", async (req, res) => {
       });
   }
   return res.status(200).send("success");
-});
+};
 
-router.get("/logout", (req, res) => {
+const logoutUser = (req, res) => {
   req.session.destroy();
   res.status(200).send("Logout Successfully");
-});
+};
 
-module.exports = router;
+module.exports = {
+  logoutUser,
+  updateUserProfile,
+  userLogin,
+  userRegister,
+  loggedUsers,
+  getUser,
+};

@@ -2,7 +2,6 @@ const bcrypt = require("bcryptjs");
 const knex = require("../../config/db");
 
 function createUser(req, res) {
-  const url = req.protocol + "://" + req.get("host");
   return handleErrors(req)
     .then(() => {
       const { phone, mobile, zipcode, password } = req.body;
@@ -14,8 +13,7 @@ function createUser(req, res) {
           password: hash,
           phone: phone && parseInt(phone),
           mobile: mobile && parseInt(mobile),
-          zipcode: zipcode && parseInt(zipcode),
-          picture: req?.file?.filename && url + "/public/" + req.file.filename,
+          zipcode: zipcode && parseInt(zipcode)
         })
         .returning("*");
     })

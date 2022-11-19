@@ -15,14 +15,12 @@ opts.secretOrKey = "random string";
 
 passport.use(
   new LocalStrategy(async function (email, password, done) {
-    console.log("comes in local", email, password);
     const user = await knex("users").where({ email }).first();
 
     if (!user) return done(null, false, { message: "Incorect email" });
     if (!authHelper.comparePass(password, user.password)) {
       return done(null, false, { message: "Incorrect password" });
     }
-    console.log("success");
     return done(null, user);
   })
 );
